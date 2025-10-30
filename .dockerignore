@@ -1,0 +1,7 @@
+*
+!/src
+!/pyproject.toml
+!/uv.lock
+!/secrets
+!/migrations
+!/alembic.ini

@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_DEV: "true"
+    container_name: fastapi-template-app
+    env_file:
+      - ./secrets/.env
+    ports:
+      - "${APP_PORT:-8080}:80"
+    restart: unless-stopped
+    volumes:
+      - ./src:/app/src:ro
+      - ./migrations:/app/migrations
+    entrypoint: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--reload", "--no-access-log"]
+    depends_on:
+      database:
+        condition: service_healthy
+  database:
+    image: postgres:16-trixie
+    container_name: fastapi-template-database
+    env_file:
+      - ./secrets/.env
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$DATABASE_USER -d $$DATABASE_NAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+volumes:
+  pgdata:
