@@ -52,7 +52,7 @@ repos:
           - mdformat-frontmatter # YAML frontmatter support
           - ruff # Required for mdformat-ruff
   - repo: https://github.com/google/yamlfmt
-    rev: v0.19.0
+    rev: v0.20.0
     hooks:
       - id: yamlfmt
         name: "📄 yaml · Format YAML files"
