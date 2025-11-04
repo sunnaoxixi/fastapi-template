@@ -1,331 +1,373 @@
-# FastAPI Template con DDD y Alembic
+# FastAPI Template
 
-Template de FastAPI siguiendo principios de Domain-Driven Design (DDD) con migraciones de base de datos usando Alembic.
+A production-ready FastAPI template implementing Domain-Driven Design (DDD) and Clean Architecture principles with Dependency Injection, featuring authentication, database migrations, and Docker deployment.
 
-## 🏗️ Arquitectura
+## 🚀 Features
 
-Este proyecto sigue una arquitectura DDD con Bounded Contexts:
+- **Clean Architecture**: Organized by contexts following DDD principles
+- **Dependency Injection**: Using `dependency-injector` for better testability and modularity
+- **Authentication**: API Key-based authentication system ready to use
+- **Database Management**:
+  - PostgreSQL with async SQLAlchemy
+  - Alembic for database migrations
+  - Connection pooling and health checks
+- **Docker Support**: Complete Docker Compose setup for development and production
+- **Code Quality**:
+  - Ruff for linting and formatting (configured with extensive rule sets)
+  - Pre-commit hooks
+  - Strict type checking with Python 3.13
+- **Structured Logging**: Loguru integration with request/response middleware
+- **Settings Management**: Pydantic Settings with environment-based configuration
+- **Production Ready**:
+  - Multi-stage Docker builds
+  - Health check endpoints
+  - Non-root user execution
+  - Hot reload in development
 
-```
-src/
-├── contexts/
-│   ├── auth/                    # Bounded Context: Autenticación
-│   │   ├── domain/             # Lógica de negocio
-│   │   ├── application/        # Casos de uso
-│   │   └── infrastructure/     # Implementación (DB, API)
-│   └── shared/                 # Infraestructura compartida
-│       ├── domain/             # Abstracciones de dominio compartidas
-│       └── infrastructure/     # Implementaciones compartidas
-│           ├── persistence/    # Base de datos
-│           ├── cache/          # Cache
-│           └── logger/         # Logging
-├── main.py                     # Punto de entrada
-└── settings.py                 # Configuración
-```
-
-## 🚀 Inicio Rápido
-
-### Requisitos Previos
+## 📋 Requirements
 
 - Python 3.13+
-- PostgreSQL 14+
-- Docker y Docker Compose (opcional)
-- uv (gestor de paquetes Python)
+- [uv](https://github.com/astral-sh/uv) - Fast Python package installer
+- Docker & Docker Compose (for containerized deployment)
+- PostgreSQL 16+ (handled by Docker Compose)
 
-### Instalación Local
+## 🏗️ Project Structure
 
-1. **Clonar el repositorio**
-
-   ```bash
-   git clone <repository-url>
-   cd fastapi-template
-   ```
-
-1. **Instalar dependencias**
-
-   ```bash
-   uv sync
-   ```
-
-1. **Configurar variables de entorno**
-
-   ```bash
-   cp secrets/.env.example secrets/.env
-   # Editar secrets/.env con tus configuraciones
-   ```
-
-1. **Inicializar la base de datos**
-
-   ```bash
-   # Asegúrate de que PostgreSQL está corriendo
-   uv run alembic upgrade head
-   ```
-
-1. **Ejecutar la aplicación**
-
-   ```bash
-   uv run fastapi dev src/main.py
-   ```
-
-### Con Docker
-
-1. **Iniciar los servicios**
-
-   ```bash
-   make start
-   # o
-   docker compose up
-   ```
-
-1. **Ejecutar migraciones**
-
-   ```bash
-   make migration-upgrade
-   ```
-
-## 🗄️ Migraciones de Base de Datos
-
-Este proyecto usa [Alembic](https://alembic.sqlalchemy.org/) para gestionar migraciones de base de datos.
-
-### Comandos Comunes
-
-#### Crear una nueva migración
-
-```bash
-# Con Docker
-make migration-create
-# Ingresa el mensaje cuando se te pida
-
-# Local
-uv run alembic revision --autogenerate -m "descripción del cambio"
+```
+fastapi-template/
+├── src/
+│   ├── main.py                    # FastAPI application entry point
+│   ├── settings.py                # Application settings & configuration
+│   ├── container.py               # Dependency injection container
+│   └── contexts/                  # DDD contexts
+│       ├── auth/                  # Authentication context
+│       │   ├── domain/           # Domain models & repositories
+│       │   ├── application/      # Use cases
+│       │   └── infrastructure/   # Persistence & external services
+│       └── shared/               # Shared kernel
+│           ├── domain/
+│           └── infrastructure/   # Database, cache, logging
+├── migrations/                    # Alembic database migrations
+├── scripts/                       # Utility scripts (init_db, etc.)
+├── secrets/                       # Environment variables (.env)
+├── docker-compose.yaml           # Docker services definition
+├── Dockerfile                    # Multi-stage Docker build
+├── Makefile                      # Development commands
+└── pyproject.toml               # Project dependencies & config
 ```
 
-#### Aplicar migraciones
+## 🚀 Quick Start
+
+### 1. Clone the Repository
 
 ```bash
-# Con Docker
-make migration-upgrade
-
-# Local
-uv run alembic upgrade head
+git clone https://github.com/p0llopez/fastapi-template.git
+cd fastapi-template
 ```
 
-#### Revertir migración
+### 2. Set Up Environment Variables
+
+Create a `.env` file in the `secrets/` directory:
 
 ```bash
-# Con Docker
-make migration-downgrade
-
-# Local
-uv run alembic downgrade -1
-```
-
-#### Ver historial de migraciones
-
-```bash
-# Con Docker
-make migration-history
-
-# Local
-uv run alembic history
-```
-
-Para más información sobre migraciones, consulta [migrations/README.md](migrations/README.md)
-
-## 📁 Estructura del Proyecto
-
-### Contextos (Bounded Contexts)
-
-Cada contexto sigue la estructura de DDD:
-
-- **domain/**: Lógica de negocio pura
-
-  - `aggregates.py`: Entidades agregadas
-  - `errors.py`: Excepciones del dominio
-  - `repositories.py`: Interfaces de repositorios
-
-- **application/**: Casos de uso de la aplicación
-
-  - `use_cases/`: Lógica de aplicación
-
-- **infrastructure/**: Implementaciones concretas
-
-  - `persistence/`: Modelos SQLAlchemy y repositorios
-  - `container.py`: Inyección de dependencias
-
-### Infraestructura Compartida
-
-El contexto `shared` contiene código compartido entre todos los contextos:
-
-- **Database**: Configuración de SQLAlchemy con soporte async
-- **Cache**: Cliente de cache (in-memory, Redis)
-- **Logger**: Configuración de logging con Loguru
-- **Base Models**: Base declarativa para todos los modelos
-
-## 🔧 Desarrollo
-
-### Agregar un Nuevo Bounded Context
-
-1. **Crear la estructura de directorios**
-
-   ```bash
-   mkdir -p src/contexts/nuevo_contexto/{domain,application/use_cases,infrastructure/persistence}
-   ```
-
-1. **Crear los modelos de dominio**
-
-   ```python
-   # src/contexts/nuevo_contexto/domain/aggregates.py
-   from dataclasses import dataclass
-
-
-   @dataclass
-   class MiEntidad:
-       id: str
-       nombre: str
-   ```
-
-1. **Crear los modelos de persistencia**
-
-   ```python
-   # src/contexts/nuevo_contexto/infrastructure/persistence/models.py
-   from sqlalchemy import Column, String
-   from src.contexts.shared.infrastructure.persistence.base import Base
-
-
-   class MiEntidadModel(Base):
-       __tablename__ = "mi_tabla"
-
-       id = Column(String(36), primary_key=True)
-       nombre = Column(String(100), nullable=False)
-   ```
-
-1. **Registrar los modelos en Alembic**
-
-   ```python
-   # migrations/env.py
-   from src.contexts.nuevo_contexto.infrastructure.persistence import (
-       models as nuevo_models,
-   )  # noqa: F401
-   ```
-
-1. **Generar la migración**
-
-   ```bash
-   uv run alembic revision --autogenerate -m "add nuevo_contexto models"
-   ```
-
-### Mejores Prácticas
-
-#### 1. Separación de Responsabilidades
-
-- **Domain**: Lógica de negocio pura, sin dependencias externas
-- **Application**: Orquestación de casos de uso
-- **Infrastructure**: Detalles de implementación (DB, API, etc.)
-
-#### 2. Dependency Injection
-
-Usa `dependency-injector` para inyección de dependencias:
-
-```python
-from dependency_injector import containers, providers
-
-
-class MiContainer(containers.DeclarativeContainer):
-    config = providers.Configuration()
-
-    repository = providers.Singleton(
-        MiRepositorio,
-        session_factory=config.session_factory,
-    )
-```
-
-#### 3. Migraciones
-
-- Siempre revisa las migraciones autogeneradas
-- Usa migraciones de datos cuando sea necesario
-- Mantén las migraciones reversibles
-- Usa las utilidades en `migrations/utils.py`
-
-#### 4. Testing
-
-```bash
-# Ejecutar tests
-pytest
-
-# Con coverage
-pytest --cov=src
-```
-
-## 🛠️ Makefile
-
-El proyecto incluye un Makefile con comandos útiles:
-
-```bash
-# Docker
-make start              # Iniciar servicios
-make stop               # Detener servicios
-make restart            # Reiniciar servicios
-make logs               # Ver logs
-
-# Migraciones (Docker)
-make migration-create           # Crear migración
-make migration-upgrade          # Aplicar migraciones
-make migration-downgrade        # Revertir migración
-make migration-history          # Ver historial
-
-# Migraciones (Local)
-make local-migration-create     # Crear migración localmente
-make local-migration-upgrade    # Aplicar migraciones localmente
-make local-migration-downgrade  # Revertir migración localmente
-
-# Utilidades
-make shell              # Shell en el contenedor
-make db-shell          # Shell de PostgreSQL
-make install           # Instalar dependencias localmente
-```
-
-## 📝 Variables de Entorno
-
-Copia `secrets/.env.example` a `secrets/.env` y configura:
-
-```bash
+mkdir -p secrets
+cat > secrets/.env << EOF
 # Application
 ENVIRONMENT=development
 LOG_LEVEL=INFO
-
-# Security
-SECRET_KEY=tu-clave-secreta-super-segura
+APP_PORT=8080
 
 # Database
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
+DATABASE_URL=postgresql+asyncpg://fastapi:fastapi@database:5432/fastapi_db
+DATABASE_USER=fastapi
+DATABASE_PASSWORD=fastapi
+DATABASE_NAME=fastapi_db
+DATABASE_PORT=5432
+
+# Security
+SECRET_KEY=your-secret-key-here-change-in-production
+EOF
 ```
 
-## 🔐 Seguridad
+### 3. Start with Docker Compose (Recommended)
 
-- **Nunca** commits el archivo `secrets/.env` al repositorio
-- Cambia el `SECRET_KEY` en producción
-- Usa variables de entorno para credenciales
-- Mantén las dependencias actualizadas
+```bash
+# Build and start all services
+make build && make start
 
-## 📚 Recursos
+# Or manually:
+docker compose up --build
+```
 
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [SQLAlchemy Async](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html)
-- [Alembic Documentation](https://alembic.sqlalchemy.org/)
-- [Domain-Driven Design](https://martinfowler.com/bliki/DomainDrivenDesign.html)
-- [Dependency Injector](https://python-dependency-injector.ets-labs.org/)
+The API will be available at `http://localhost:8080`
 
-## 📄 Licencia
+### 4. Local Development (without Docker)
 
-[MIT License](LICENSE)
+```bash
+# Install dependencies with uv
+make install
 
-## 🤝 Contribución
+# Or manually:
+uv sync
 
-Las contribuciones son bienvenidas. Por favor:
+# Run database migrations
+make migration-upgrade
 
-1. Haz fork del proyecto
-1. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-1. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-1. Push a la rama (`git push origin feature/AmazingFeature`)
-1. Abre un Pull Request
+# Start the application
+uv run uvicorn src.main:app --reload
+```
+
+## 🛠️ Development Commands
+
+The project includes a comprehensive Makefile for common tasks:
+
+### Docker Operations
+
+```bash
+make start           # Start all services
+make stop            # Stop all services
+make build           # Build Docker images
+make restart         # Restart all services
+make logs            # Follow application logs
+make shell           # Open bash in app container
+make db-shell        # Open psql in database container
+```
+
+### Database Migrations
+
+```bash
+make migration-create              # Create auto-generated migration
+make migration-create-empty        # Create empty migration template
+make migration-upgrade             # Apply all pending migrations
+make migration-downgrade           # Rollback last migration
+make migration-history             # Show migration history
+make migration-current             # Show current migration version
+```
+
+### Code Quality
+
+```bash
+make fmt             # Format code with ruff
+make lint            # Run linter with auto-fix
+make test            # Run tests with pytest
+make all             # Run install, format, lint, and test
+make clean           # Remove __pycache__ and .pyc files
+```
+
+## 📚 Architecture Overview
+
+### Domain-Driven Design (DDD)
+
+The project is organized into **contexts** (bounded contexts in DDD terminology):
+
+- **Auth Context**: Handles authentication, users, and API keys
+- **Shared Context**: Common infrastructure (database, logging, caching)
+
+Each context follows a layered architecture:
+
+1. **Domain Layer**: Business logic, entities, and repository interfaces
+1. **Application Layer**: Use cases and business workflows
+1. **Infrastructure Layer**: Database models, external services, and implementations
+
+### Dependency Injection
+
+The application uses `dependency-injector` for managing dependencies:
+
+- `ApplicationContainer`: Root container
+- Context-specific containers (e.g., `AuthContainer`, `SharedContainer`)
+- Providers for repositories, use cases, and services
+
+### Example: Adding a New Feature
+
+To add a new feature (e.g., a "Products" context):
+
+1. Create the context structure:
+
+   ```
+   src/contexts/products/
+   ├── domain/
+   │   ├── aggregates.py      # Product entity
+   │   └── repositories.py    # Repository interface
+   ├── application/
+   │   └── use_cases/         # Business logic
+   └── infrastructure/
+       ├── container.py       # DI container
+       └── persistence/       # Database models
+   ```
+
+1. Register in the main container (`src/container.py`)
+
+1. Create database models and migrations
+
+1. Implement use cases and endpoints
+
+## 🔐 Authentication
+
+The template includes an API Key authentication system:
+
+### Domain Model
+
+- **User**: Represents a user with username, email, and password
+- **ApiKey**: API keys associated with users for authentication
+
+### Use Cases
+
+- `AuthenticateWithApiKeyUseCase`: Validate API keys
+- `CreateApiKeyUseCase`: Generate new API keys for users
+
+### Example Usage
+
+```python
+from src.contexts.auth.application.use_cases import AuthenticateWithApiKeyUseCase
+
+# In your endpoint:
+is_valid = await authenticate_use_case.execute(api_key="user-api-key")
+```
+
+## 🗄️ Database
+
+### Migrations
+
+The project uses Alembic for database migrations:
+
+```bash
+# Create a new migration after modifying models
+make migration-create
+
+# Apply migrations
+make migration-upgrade
+
+# Rollback last migration
+make migration-downgrade
+```
+
+### Database Initialization
+
+Run the initialization script to set up the database and apply migrations:
+
+```bash
+docker compose exec app python -m scripts.init_db
+```
+
+## 🐳 Docker Deployment
+
+### Multi-Stage Build
+
+The Dockerfile uses a multi-stage build for optimized images:
+
+1. **Base**: Python 3.13 slim image
+1. **Builder**: Installs dependencies using uv
+1. **Runner**: Final image with only runtime dependencies
+
+### Production Considerations
+
+- Non-root user execution for security
+- Compiled bytecode for faster startup
+- Health checks for container orchestration
+- Volume mounts for hot reload in development
+
+### Environment Variables
+
+Control build behavior:
+
+```bash
+# Build with dev dependencies
+docker compose build --build-arg INSTALL_DEV=true
+
+# Production build
+docker compose build --build-arg INSTALL_DEV=false
+```
+
+## ⚙️ Configuration
+
+Configuration is managed through `src/settings.py` using Pydantic Settings:
+
+```python
+from src.settings import settings
+
+# Access configuration
+if settings.is_production:
+    # Production-specific code
+    pass
+
+# Database URL
+db_url = settings.database_url
+
+# Feature flags
+log_level = settings.log_level
+```
+
+### Available Settings
+
+- **Application**: `environment`, `log_level`
+- **Security**: `secret_key`, `allowed_origins`
+- **Database**: `database_url`
+
+## 📝 Logging
+
+Structured logging with Loguru:
+
+- Request/response logging middleware
+- Configurable log levels
+- JSON formatting for production
+- Console formatting for development
+
+## 🧪 Testing
+
+(Add your testing approach here)
+
+```bash
+# Run tests
+make test
+
+# With coverage
+pytest --cov=src --cov-report=html
+```
+
+## 🚢 Production Deployment
+
+### Using Docker Compose
+
+1. Update environment variables for production
+1. Build production images:
+   ```bash
+   docker compose -f docker-compose.yaml build
+   ```
+1. Deploy to your infrastructure (AWS, GCP, Azure, etc.)
+
+## 🤝 Contributing
+
+1. Fork the repository
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
+1. Commit your changes using conventional commits
+1. Push to the branch (`git push origin feature/amazing-feature`)
+1. Open a Pull Request
+
+### Code Style
+
+This project uses:
+
+- **Ruff** for linting and formatting
+- **Pre-commit hooks** for automated checks
+- **Conventional commits** with gitmoji
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 👤 Author
+
+**Pol López Cano**
+
+- Email: pol.lopez.cano@gmail.com
+- GitHub: [@p0llopez](https://github.com/p0llopez)
+
+## 🙏 Acknowledgments
+
+- FastAPI for the excellent web framework
+- Astral's uv for blazing-fast package management
+- The Python community for amazing tools and libraries
+
+______________________________________________________________________
+
+**Happy Coding! 🎉**
