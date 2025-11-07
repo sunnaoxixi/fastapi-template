@@ -80,10 +80,6 @@ class UserSQLAlchemyRepository(UserRepository):
             self.cache_client.delete(f"user:{user.user_id}")
 
     async def find_by_id(self, user_id: UUID) -> User | None:
-        cached_user = self.cache_client.get(f"user:{user_id}")
-        if cached_user:
-            return cached_user
-
         async with self.session_factory() as session:
             result = await session.execute(
                 select(UserModel)
@@ -93,9 +89,7 @@ class UserSQLAlchemyRepository(UserRepository):
             model = result.scalar_one_or_none()
 
             if model:
-                user = self._to_domain(model)
-                self.cache_client.set(f"user:{user_id}", user)
-                return user
+                return model.to_domain()
             return None
 
     async def find_by_email(self, email: str) -> User | None:
@@ -108,9 +102,7 @@ class UserSQLAlchemyRepository(UserRepository):
             model = result.scalar_one_or_none()
 
             if model:
-                user = self._to_domain(model)
-                self.cache_client.set(f"user:{user.user_id}", user)
-                return user
+                return model.to_domain()
             return None
 
     async def find_by_api_key(self, api_key: str) -> User | None:
@@ -148,18 +140,3 @@ class UserSQLAlchemyRepository(UserRepository):
 
                 await session.delete(model)
                 await session.commit()
-
-                self.cache_client.delete(f"user:{user_id}")
-
-    def _to_domain(self, model: UserModel) -> User:
-        api_keys = [api_key.to_domain() for api_key in model.api_keys]
-        return User(
-            user_id=model.user_id,
-            username=model.username,
-            email=model.email,
-            password=model.password,
-            is_active=model.is_active,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
-            api_keys=api_keys,
-        )

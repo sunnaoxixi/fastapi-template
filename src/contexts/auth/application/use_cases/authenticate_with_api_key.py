@@ -6,7 +6,7 @@ class AuthenticateWithApiKeyUseCase:
     def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 
-    async def execute(self, api_key: str) -> bool:
+    async def execute(self, api_key: str) -> bool | None:
         user = await self.user_repository.find_by_api_key(api_key)
 
         if not user:

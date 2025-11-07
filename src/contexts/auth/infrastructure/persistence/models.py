@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 
-from src.contexts.auth.domain.aggregates import ApiKey
+from src.contexts.auth.domain.aggregates import ApiKey, User
 from src.contexts.shared.infrastructure.persistence.base import SQLAlchemyBaseModel
 
 
@@ -20,6 +20,30 @@ class UserModel(SQLAlchemyBaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+
+    @staticmethod
+    def from_domain(user: User) -> "UserModel":
+        return UserModel(
+            user_id=str(user.user_id),
+            username=user.username,
+            email=user.email,
+            password=user.password,
+            is_active=user.is_active,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+        )
+
+    def to_domain(self) -> User:
+        return User(
+            user_id=self.user_id,
+            username=self.username,
+            email=self.email,
+            password=self.password,
+            is_active=self.is_active,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            api_keys=[api_key.to_domain() for api_key in self.api_keys],
+        )
 
 
 class ApiKeyModel(SQLAlchemyBaseModel):
