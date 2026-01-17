@@ -66,7 +66,7 @@ migration-show: ## Show the head migration
 migration-sql: ## Generate SQL for upgrade head
 	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) alembic upgrade head --sql
 
-## Desarrollo: install / format / lint / test / clean
+## Desarrollo: install / format / lint / clean
 install: ## Install/sync dependencies (uses `uv sync` if available)
 	@command -v uv >/dev/null 2>&1 && uv sync || (echo "uv not found. Install it."; exit 1)
 
@@ -76,22 +76,27 @@ fmt: ## Format code with ruff
 lint: ## Run lint with ruff
 	@command -v ruff >/dev/null 2>&1 && ruff check src tests --fix || true
 
-test: ## Run all tests with pytest
-	@command -v pytest >/dev/null 2>&1 && pytest || true
+all: install fmt lint ## Run all dev tasks
 
-test-unit: ## Run only unit tests
-	@command -v pytest >/dev/null 2>&1 && pytest -m unit || true
+## Tests (Docker)
+test: ## Run all tests in Docker
+	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest
 
-test-integration: ## Run only integration tests
-	@command -v pytest >/dev/null 2>&1 && pytest -m integration || true
+test-unit: ## Run unit tests in Docker
+	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest -m unit
 
-test-e2e: ## Run only e2e tests
-	@command -v pytest >/dev/null 2>&1 && pytest -m e2e || true
+test-integration: ## Run integration tests in Docker
+	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest -m integration
 
-test-cov: ## Run tests with coverage report
-	@command -v pytest >/dev/null 2>&1 && pytest --cov=src --cov-report=term-missing --cov-report=html || true
+test-e2e: ## Run e2e tests in Docker
+	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest -m e2e
 
-all: install fmt lint test ## Run all dev tasks
+test-cov: ## Run tests with coverage in Docker
+	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest --cov=src --cov-report=term-missing
+
+## Tests (Local - for pre-commit)
+test-unit-local: ## Run unit tests locally (fast, no Docker)
+	@command -v pytest >/dev/null 2>&1 && pytest -m unit -q || uv run pytest -m unit -q
 
 clean: ## Clean pyc files and caches
 	@find . -name '__pycache__' -type d -exec rm -rf {} + || true
@@ -105,4 +110,4 @@ cli: ## Run CLI command in container (usage: make cli args="auth list-users")
 		$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) uv run cli $(args); \
 	fi
 
-.PHONY: help start stop build restart logs shell db-shell migration-create migration-create-empty migration-upgrade migration-downgrade migration-history migration-current migration-show migration-sql all install fmt lint test test-unit test-integration test-e2e test-cov clean cli
+.PHONY: help start stop build restart logs shell db-shell migration-create migration-create-empty migration-upgrade migration-downgrade migration-history migration-current migration-show migration-sql all install fmt lint test test-unit test-integration test-e2e test-cov test-unit-local clean cli
