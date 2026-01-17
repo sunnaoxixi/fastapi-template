@@ -80,19 +80,19 @@ all: install fmt lint ## Run all dev tasks
 
 ## Tests (Docker)
 test: ## Run all tests in Docker
-	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest
+	$(COMPOSE) -f $(COMPOSE_FILE) exec -T $(SERVICE) python -m pytest
 
 test-unit: ## Run unit tests in Docker
-	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest -m unit
+	$(COMPOSE) -f $(COMPOSE_FILE) exec -T $(SERVICE) python -m pytest -m unit
 
 test-integration: ## Run integration tests in Docker
-	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest -m integration
+	$(COMPOSE) -f $(COMPOSE_FILE) exec -T $(SERVICE) python -m pytest -m integration
 
 test-e2e: ## Run e2e tests in Docker
-	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest -m e2e
+	$(COMPOSE) -f $(COMPOSE_FILE) exec -T $(SERVICE) python -m pytest -m e2e
 
 test-cov: ## Run tests with coverage in Docker
-	$(COMPOSE) -f $(COMPOSE_FILE) exec $(SERVICE) pytest --cov=src --cov-report=term-missing
+	$(COMPOSE) -f $(COMPOSE_FILE) exec -T $(SERVICE) python -m pytest --cov=src --cov-report=term-missing
 
 ## Tests (Local - for pre-commit)
 test-unit-local: ## Run unit tests locally (fast, no Docker)
