@@ -4,7 +4,7 @@ A production-ready FastAPI template implementing Domain-Driven Design (DDD) and 
 
 ## 🚀 Features
 
-- **Clean Architecture**: Organized by contexts following DDD principles
+- **Clean Architecture**: Organized by contexts following DDD principles (NOT strict DDD)
 - **Dependency Injection**: Using `dependency-injector` for better testability and modularity
 - **Authentication**: API Key middleware (global dependency) with public-route decorator
 - **CLI Commands**: Typer-based administrative CLI for user management and more
