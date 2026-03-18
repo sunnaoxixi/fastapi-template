@@ -1,14 +1,14 @@
 from typing import Annotated
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, Request
 from fastapi.security import APIKeyHeader
 
 from src.contexts.auth.application.use_cases.authenticate_with_api_key import (
     AuthenticateWithApiKeyDTO,
     AuthenticateWithApiKeyUseCase,
 )
-from src.contexts.auth.domain.errors import InactiveApiKeyError, InvalidApiKeyError
+from src.contexts.auth.domain.errors import MissingApiKeyError
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
@@ -27,14 +27,8 @@ async def verify_api_key(
         return None
 
     if not api_key:
-        raise HTTPException(status_code=401, detail="API key missing")
+        raise MissingApiKeyError
 
-    try:
-        await authenticate_use_case.execute(AuthenticateWithApiKeyDTO(api_key=api_key))
-    except InvalidApiKeyError as err:
-        raise HTTPException(status_code=401, detail="Invalid API key") from err
-    except InactiveApiKeyError as err:
-        raise HTTPException(status_code=403, detail="API key inactive") from err
-    else:
-        request.state.api_key = api_key
-        return api_key
+    await authenticate_use_case.execute(AuthenticateWithApiKeyDTO(api_key=api_key))
+    request.state.api_key = api_key
+    return api_key

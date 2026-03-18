@@ -20,9 +20,7 @@ class TestAuthenticateWithApiKeyUseCase:
         await fake_user_repository.save(user)
         use_case = AuthenticateWithApiKeyUseCase(fake_user_repository)
 
-        result = await use_case.execute(AuthenticateWithApiKeyDTO(api_key=api_key))
-
-        assert result is True
+        await use_case.execute(AuthenticateWithApiKeyDTO(api_key=api_key))
 
     async def test_raises_error_for_invalid_key(
         self, fake_user_repository: FakeUserRepository

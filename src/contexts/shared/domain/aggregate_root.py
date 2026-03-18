@@ -2,4 +2,4 @@ from pydantic import BaseModel
 
 
 class AggregateRoot(BaseModel):
-    pass
+    model_config = {"populate_by_name": True}

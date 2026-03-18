@@ -1,6 +1,9 @@
+from uuid import uuid4
+
 import pytest
 
 from src.contexts.auth.domain.aggregates import User
+from src.contexts.auth.domain.errors import ApiKeyNotFoundError
 
 
 @pytest.mark.unit
@@ -25,10 +28,15 @@ class TestUserAggregate:
         user = User.create(username="johndoe", password="pass123")
         api_key = user.create_api_key()
 
-        result = user.revoke_api_key(api_key.api_key_id)
+        user.revoke_api_key(api_key.api_key_id)
 
-        assert result is True
         assert user.api_keys[0].is_active is False
+
+    def test_revoke_api_key_raises_when_not_found(self) -> None:
+        user = User.create(username="johndoe", password="pass123")
+
+        with pytest.raises(ApiKeyNotFoundError):
+            user.revoke_api_key(uuid4())
 
     def test_find_api_key(self) -> None:
         user = User.create(username="johndoe", password="pass123")

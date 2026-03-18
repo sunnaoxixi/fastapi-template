@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim AS base
+FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim AS base
 
 LABEL maintainer="pol.lopez.cano@gmail.com" \
       description="FastAPI Template Application" \

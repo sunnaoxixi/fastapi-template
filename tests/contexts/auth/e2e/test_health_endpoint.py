@@ -10,7 +10,10 @@ class TestHealthEndpoint:
         assert response.status_code == 200
         assert response.json()["status"] == "healthy"
 
-    async def test_protected_requires_api_key(self, client: AsyncClient) -> None:
+    async def test_protected_returns_401_without_api_key(
+        self, client: AsyncClient
+    ) -> None:
         response = await client.get("/health-protected")
 
-        assert response.status_code in (401, 403)
+        assert response.status_code == 401
+        assert response.json()["detail"] == "API key is required."

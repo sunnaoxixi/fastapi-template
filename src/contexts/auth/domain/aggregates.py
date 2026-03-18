@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
+from src.contexts.auth.domain.errors import ApiKeyNotFoundError
 from src.contexts.shared.domain.aggregate_root import AggregateRoot
 
 
@@ -19,7 +20,7 @@ class ApiKey(BaseModel):
     @staticmethod
     def create(
         user_id: UUID,
-    ) -> "ApiKey":
+    ) -> ApiKey:
         now = datetime.now(UTC)
         return ApiKey(
             id=uuid4(),
@@ -41,14 +42,12 @@ class User(AggregateRoot):
     updated_at: datetime
     api_keys: list[ApiKey] = Field(default_factory=list)
 
-    model_config = {"populate_by_name": True}
-
     @staticmethod
     def create(
         username: str,
         password: str,
         email: str | None = None,
-    ) -> "User":
+    ) -> User:
         user_id = uuid4()
         now = datetime.now(UTC)
         return User(
@@ -68,14 +67,14 @@ class User(AggregateRoot):
         self.updated_at = datetime.now(UTC)
         return api_key
 
-    def revoke_api_key(self, api_key_id: UUID) -> bool:
+    def revoke_api_key(self, api_key_id: UUID) -> None:
         for api_key in self.api_keys:
             if api_key.api_key_id == api_key_id:
                 api_key.is_active = False
                 api_key.updated_at = datetime.now(UTC)
                 self.updated_at = datetime.now(UTC)
-                return True
-        return False
+                return
+        raise ApiKeyNotFoundError
 
     def get_active_api_keys(self) -> list[ApiKey]:
         return [key for key in self.api_keys if key.is_active]

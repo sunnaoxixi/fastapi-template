@@ -8,6 +8,9 @@ from pydantic import BaseModel
 from src.container import ApplicationContainer
 from src.contexts.auth.infrastructure.http import verify_api_key
 from src.contexts.shared.infrastructure.http import public
+from src.contexts.shared.infrastructure.http.exception_handlers import (
+    register_exception_handlers,
+)
 from src.contexts.shared.infrastructure.logger import setup_logger
 
 container = ApplicationContainer()
@@ -39,6 +42,7 @@ app = FastAPI(
 )
 
 setup_logger(app)
+register_exception_handlers(app)
 
 # app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
 

@@ -16,7 +16,7 @@ A production-ready FastAPI template implementing Domain-Driven Design (DDD) and 
 - **Code Quality**:
   - Ruff for linting and formatting (configured with extensive rule sets)
   - Pre-commit hooks
-  - Type hints targeting Python 3.13
+  - Type hints targeting Python 3.14
 - **Structured Logging**: Loguru integration with request/response middleware
 - **Settings Management**: Pydantic Settings with environment-based configuration
 - **Production Ready**:
@@ -27,7 +27,7 @@ A production-ready FastAPI template implementing Domain-Driven Design (DDD) and 
 
 ## 📋 Requirements
 
-- Python 3.13+
+- Python 3.14+
 - [uv](https://github.com/astral-sh/uv) - Fast Python package installer (used locally and in Docker)
 - Docker & Docker Compose (for containerized deployment)
 - PostgreSQL 16+ (handled by Docker Compose)
@@ -284,7 +284,7 @@ docker compose exec app python -m scripts.init_db
 
 The Dockerfile uses a multi-stage build for optimized images:
 
-1. **Base**: Python 3.13 slim image
+1. **Base**: Python 3.14 slim image
 1. **Builder**: Installs dependencies using uv
 1. **Runner**: Final image with only runtime dependencies
 

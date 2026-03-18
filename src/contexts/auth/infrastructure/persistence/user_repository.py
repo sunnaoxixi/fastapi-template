@@ -37,7 +37,7 @@ class UserSQLAlchemyRepository(UserRepository):
                 for old_key in existing_model.api_keys:
                     if old_key.api_key_id not in new_api_key_ids:
                         await session.delete(old_key)
-                        self.cache_client.delete(f"api_key:{old_key.api_key}")
+                        await self.cache_client.delete(f"api_key:{old_key.api_key}")
 
                 for api_key in user.api_keys:
                     api_key_model = next(
@@ -57,7 +57,7 @@ class UserSQLAlchemyRepository(UserRepository):
                         new_api_key = ApiKeyModel.from_domain(api_key)
                         session.add(new_api_key)
 
-                    self.cache_client.set(f"api_key:{api_key.key}", api_key)
+                    await self.cache_client.set(f"api_key:{api_key.key}", api_key)
             else:
                 user_model = UserModel(
                     user_id=str(user.user_id),
@@ -73,7 +73,7 @@ class UserSQLAlchemyRepository(UserRepository):
                 for api_key in user.api_keys:
                     api_key_model = ApiKeyModel.from_domain(api_key)
                     session.add(api_key_model)
-                    self.cache_client.set(f"api_key:{api_key.key}", api_key)
+                    await self.cache_client.set(f"api_key:{api_key.key}", api_key)
 
             await session.commit()
 
@@ -101,7 +101,7 @@ class UserSQLAlchemyRepository(UserRepository):
 
             if model:
                 for api_key in model.api_keys:
-                    self.cache_client.delete(f"api_key:{api_key.api_key}")
+                    await self.cache_client.delete(f"api_key:{api_key.api_key}")
 
                 await session.delete(model)
                 await session.commit()
@@ -116,7 +116,7 @@ class UserSQLAlchemyRepository(UserRepository):
             return [model.to_domain() for model in models]
 
     async def find_api_key_by_key(self, key: str) -> ApiKey | None:
-        cached_api_key = self.cache_client.get(f"api_key:{key}")
+        cached_api_key = await self.cache_client.get(f"api_key:{key}")
         if cached_api_key:
             return cached_api_key
 
@@ -128,6 +128,6 @@ class UserSQLAlchemyRepository(UserRepository):
 
             if model:
                 api_key_domain = model.to_domain()
-                self.cache_client.set(f"api_key:{key}", api_key_domain)
+                await self.cache_client.set(f"api_key:{key}", api_key_domain)
                 return api_key_domain
             return None
