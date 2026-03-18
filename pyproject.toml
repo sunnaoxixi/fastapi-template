@@ -7,6 +7,7 @@ name = "fastapi-template"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.14"
 dependencies = [
     "alembic>=1.17.0",

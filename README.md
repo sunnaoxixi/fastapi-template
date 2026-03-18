@@ -343,19 +343,7 @@ Structured logging with Loguru:
 
 ## 🤝 Contributing
 
-1. Fork the repository
-1. Create a feature branch (`git checkout -b feature/amazing-feature`)
-1. Commit your changes using conventional commits
-1. Push to the branch (`git push origin feature/amazing-feature`)
-1. Open a Pull Request
-
-### Code Style
-
-This project uses:
-
-- **Ruff** for linting and formatting
-- **Pre-commit hooks** for automated checks
-- **Conventional commits** with gitmoji
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
