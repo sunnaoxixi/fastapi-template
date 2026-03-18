@@ -102,8 +102,6 @@ The project follows a **hexagonal DDD** structure. Each bounded context lives un
 - **Application** — use cases that orchestrate domain logic. Dependencies are injected via ports.
 - **Infrastructure** — SQLAlchemy repositories, HTTP controllers, CLI commands, and DI container configuration.
 
-See `rules/architecture.md` for detailed patterns.
-
 ## License
 
 By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
