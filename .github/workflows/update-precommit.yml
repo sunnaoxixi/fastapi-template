@@ -27,13 +27,13 @@ jobs:
         run: pre-commit autoupdate
 
       - name: Run pre-commit on all files
-        run: pre-commit run --all-files || true
+        run: pre-commit run --all-files
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8
         with:
-          commit-message: 'chore(pre-commit): update hooks'
-          title: 'chore(pre-commit): update hooks'
+          commit-message: ':arrow_up: chore(deps): update pre-commit hooks'
+          title: ':arrow_up: chore(deps): update pre-commit hooks'
           body: |
             This PR updates pre-commit hooks to their latest versions.
 
