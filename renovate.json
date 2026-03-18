@@ -7,6 +7,9 @@
     "docker:enableMajor",
     "helpers:pinGitHubActionDigests"
   ],
+  "pre-commit": {
+    "enabled": true
+  },
   "labels": ["dependencies"],
   "timezone": "Europe/Madrid",
   "schedule": ["after 9am on monday"],
@@ -42,6 +45,20 @@
       "matchManagers": ["uv"],
       "matchUpdateTypes": ["major"],
       "groupName": "python-major-updates",
+      "automerge": false
+    },
+    {
+      "description": "Group and automerge pre-commit hook minor/patch updates",
+      "matchManagers": ["pre-commit"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "pre-commit-hooks",
+      "automerge": true
+    },
+    {
+      "description": "Separate PR for pre-commit hook major updates",
+      "matchManagers": ["pre-commit"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "pre-commit-major-updates",
       "automerge": false
     }
   ]
