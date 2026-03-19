@@ -5,21 +5,24 @@ from src.contexts.auth.application.use_cases.list_users import (
     ListUsersUseCase,
 )
 from src.contexts.auth.domain.aggregates import User
+from src.contexts.shared.domain.pagination import CursorResult
 from tests.contexts.auth.conftest import FakeUserRepository
 
 
 @pytest.mark.unit
 class TestListUsersUseCase:
-    async def test_returns_empty_list_when_no_users(
+    async def test_returns_empty_for_no_users(
         self, fake_user_repository: FakeUserRepository
     ) -> None:
         use_case = ListUsersUseCase(fake_user_repository)
 
-        users = await use_case.execute(ListUsersDTO())
+        result = await use_case.execute(ListUsersDTO())
 
-        assert users == []
+        assert isinstance(result, CursorResult)
+        assert result.items == []
+        assert result.next_cursor is None
 
-    async def test_returns_all_users(
+    async def test_returns_paginated_users(
         self, fake_user_repository: FakeUserRepository
     ) -> None:
         user1 = User.create(username="user1", password="pass")
@@ -28,6 +31,7 @@ class TestListUsersUseCase:
         await fake_user_repository.save(user2)
         use_case = ListUsersUseCase(fake_user_repository)
 
-        users = await use_case.execute(ListUsersDTO())
+        result = await use_case.execute(ListUsersDTO())
 
-        assert len(users) == 2
+        assert isinstance(result, CursorResult)
+        assert len(result.items) == 2
