@@ -6,10 +6,14 @@ A production-ready FastAPI template implementing Domain-Driven Design (DDD) and 
 
 - **Clean Architecture**: Organized by contexts following DDD principles (NOT strict DDD)
 - **Dependency Injection**: Using `dependency-injector` for better testability and modularity
-- **Authentication**: API Key middleware (global dependency) with public-route decorator
-- **CLI Commands**: Typer-based administrative CLI for user management and more
+- **Authentication**: API Key middleware with SHA-256 hashing (keys never stored in plain text)
+- **REST API**: User management endpoints (`/api/v1/auth/users`) with cursor-based pagination
+- **CLI Commands**: Typer-based administrative CLI for user and API key management
+- **Domain Events**: Synchronous in-process event bus with subscriber pattern
+- **Rate Limiting**: Sliding window rate limiter middleware (per-IP, configurable)
+- **Deep Health Check**: `/health` endpoint verifies database connectivity with latency reporting
 - **Database Management**:
-  - PostgreSQL with async SQLAlchemy
+  - PostgreSQL 18 with async SQLAlchemy
   - Alembic for database migrations
   - Connection pooling and health checks
 - **Docker Support**: Complete Docker Compose setup for development and production
@@ -21,7 +25,6 @@ A production-ready FastAPI template implementing Domain-Driven Design (DDD) and 
 - **Settings Management**: Pydantic Settings with environment-based configuration
 - **Production Ready**:
   - Multi-stage Docker builds
-  - Health check endpoints
   - Non-root user execution
   - Hot reload in development
 
@@ -30,7 +33,7 @@ A production-ready FastAPI template implementing Domain-Driven Design (DDD) and 
 - Python 3.14+
 - [uv](https://github.com/astral-sh/uv) - Fast Python package installer (used locally and in Docker)
 - Docker & Docker Compose (for containerized deployment)
-- PostgreSQL 16+ (handled by Docker Compose)
+- PostgreSQL 18+ (handled by Docker Compose)
 
 ## 🏗️ Project Structure
 
@@ -218,40 +221,39 @@ To add a new feature (e.g., a "Products" context):
 
 The template includes an API Key authentication system and user management:
 
-- **User Management**: Create and list users via CLI (passwords are bcrypt-hashed)
-- **API Keys**: Generate and validate API keys for authentication
-- **HTTP**: All routes require `X-API-Key` unless explicitly marked public
+- **User Management**: Create and manage users via REST API or CLI (passwords are bcrypt-hashed)
+- **API Keys**: SHA-256 hashed — plain key shown only once at creation, never stored
+- **HTTP**: All routes require `X-API-Key` header unless explicitly marked `@public`
 
-### CLI User Management
+### REST API Endpoints
+
+| Method | Route | Public | Description |
+|--------|-------|--------|-------------|
+| `POST` | `/api/v1/auth/users` | Yes | Create user |
+| `GET` | `/api/v1/auth/users` | No | List users (cursor-paginated) |
+| `GET` | `/api/v1/auth/users/{id}` | No | Get user by ID |
+| `DELETE` | `/api/v1/auth/users/{id}` | No | Delete user |
+| `GET` | `/health` | Yes | Deep health check (DB verification) |
+
+### CLI Commands (API Key Management)
+
+API key management is CLI-only for security:
 
 ```bash
-# Create user (interactive prompt for password)
 make cli args="auth create-user"
-
-# List users
 make cli args="auth list-users"
+make cli args="auth create-api-key --user-id <uuid>"
+make cli args="auth deactivate-api-key --user-id <uuid> --api-key <key>"
 ```
 
-### API Key Authentication
-
-```python
-from src.contexts.auth.application.use_cases import AuthenticateWithApiKeyUseCase
-
-# In your endpoint:
-is_valid = await authenticate_use_case.execute(api_key="user-api-key")
-```
-
-### HTTP Authentication Behavior
+### Authentication Behavior
 
 - Global dependency: all routes require the `X-API-Key` header.
 - Public routes: decorate handlers with `@public` to bypass auth.
-- Health endpoints:
-  - `GET /health` is public.
-  - `GET /health-protected` requires `X-API-Key`.
+- `POST /api/v1/auth/users` is public (needed to create the first user).
+- `GET /health` is public (needed for load balancers/orchestrators).
 
-> Note: The auth HTTP endpoints are not exposed yet. Use the CLI for now or add a router under `src/contexts/auth/infrastructure/http/` and include it in `src/main.py`.
-
-````
+```
 
 ## 🗄️ Database
 
@@ -330,6 +332,7 @@ log_level = settings.log_level
 
 - **Application**: `environment`, `log_level`
 - **Security**: `secret_key`, `allowed_origins`
+- **Rate Limiting**: `rate_limit_requests` (default: 100), `rate_limit_window_seconds` (default: 60), `rate_limit_exclude_paths` (default: `["/health"]`)
 - **Database**: `database_url`
 
 ## 📝 Logging
