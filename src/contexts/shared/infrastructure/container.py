@@ -3,6 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.contexts.shared.infrastructure.cache import InMemoryCacheClient
+from src.contexts.shared.infrastructure.events.in_memory_event_bus import (
+    InMemoryEventBus,
+)
 from src.settings import settings
 
 
@@ -25,4 +28,8 @@ class SharedContainer(containers.DeclarativeContainer):
 
     cache_client = providers.Singleton(
         InMemoryCacheClient,
+    )
+
+    event_bus = providers.Singleton(
+        InMemoryEventBus,
     )

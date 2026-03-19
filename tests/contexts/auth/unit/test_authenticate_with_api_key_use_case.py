@@ -6,6 +6,7 @@ from src.contexts.auth.application.use_cases.authenticate_with_api_key import (
 )
 from src.contexts.auth.domain.aggregates import User
 from src.contexts.auth.domain.errors import InactiveApiKeyError, InvalidApiKeyError
+from src.contexts.auth.domain.services import ApiKeyHasher
 from tests.contexts.auth.conftest import FakeUserRepository
 
 
@@ -16,11 +17,11 @@ class TestAuthenticateWithApiKeyUseCase:
         fake_user_repository: FakeUserRepository,
         sample_user_with_api_key: tuple[User, str],
     ) -> None:
-        user, api_key = sample_user_with_api_key
+        user, plain_key = sample_user_with_api_key
         await fake_user_repository.save(user)
         use_case = AuthenticateWithApiKeyUseCase(fake_user_repository)
 
-        await use_case.execute(AuthenticateWithApiKeyDTO(api_key=api_key))
+        await use_case.execute(AuthenticateWithApiKeyDTO(api_key=plain_key))
 
     async def test_raises_error_for_invalid_key(
         self, fake_user_repository: FakeUserRepository
@@ -35,12 +36,13 @@ class TestAuthenticateWithApiKeyUseCase:
         fake_user_repository: FakeUserRepository,
         sample_user_with_api_key: tuple[User, str],
     ) -> None:
-        user, api_key = sample_user_with_api_key
-        api_key_entity = user.find_api_key(api_key)
+        user, plain_key = sample_user_with_api_key
+        key_hash = ApiKeyHasher.hash(plain_key)
+        api_key_entity = user.find_api_key_by_hash(key_hash)
         assert api_key_entity is not None
         user.revoke_api_key(api_key_entity.api_key_id)
         await fake_user_repository.save(user)
         use_case = AuthenticateWithApiKeyUseCase(fake_user_repository)
 
         with pytest.raises(InactiveApiKeyError):
-            await use_case.execute(AuthenticateWithApiKeyDTO(api_key=api_key))
+            await use_case.execute(AuthenticateWithApiKeyDTO(api_key=plain_key))
