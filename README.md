@@ -341,6 +341,18 @@ Structured logging with Loguru:
 - JSON formatting for production
 - Console formatting for development
 
+## Roadmap
+
+Planned improvements for future development:
+
+- [ ] **Redis Cache** — Replace InMemoryCacheClient with Redis for distributed caching
+- [ ] **JWT Authentication** — Token-based auth for user sessions alongside API keys
+- [ ] **Prometheus Metrics** — `/metrics` endpoint for application observability
+- [ ] **OpenTelemetry Tracing** — Distributed tracing for request flows
+- [ ] **Distributed Rate Limiting** — Redis-backed rate limiter for multi-instance deployments
+- [ ] **Event Persistence** — Event sourcing / domain event storage for audit trails
+- [ ] **Roles & Permissions (RBAC)** — Role-based access control for fine-grained authorization
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
