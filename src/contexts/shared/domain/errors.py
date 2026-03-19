@@ -16,3 +16,7 @@ class ForbiddenError(DomainError):
 
 class UnauthorizedError(DomainError):
     """Raised when authentication fails."""
+
+
+class InvalidCursorError(DomainError):
+    """Raised when a pagination cursor is malformed or corrupted."""
