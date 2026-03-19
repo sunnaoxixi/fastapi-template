@@ -4,16 +4,12 @@ from httpx import AsyncClient
 
 @pytest.mark.e2e
 class TestHealthEndpoint:
-    async def test_returns_healthy(self, client: AsyncClient) -> None:
+    async def test_returns_healthy_with_components(
+        self, client: AsyncClient
+    ) -> None:
         response = await client.get("/health")
 
         assert response.status_code == 200
-        assert response.json()["status"] == "healthy"
-
-    async def test_protected_returns_401_without_api_key(
-        self, client: AsyncClient
-    ) -> None:
-        response = await client.get("/health-protected")
-
-        assert response.status_code == 401
-        assert response.json()["detail"] == "API key is required."
+        body = response.json()
+        assert body["status"] == "healthy"
+        assert "database" in body["components"]

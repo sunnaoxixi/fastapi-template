@@ -2,6 +2,7 @@ from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+from src.contexts.shared.application.use_cases.check_health import CheckHealthUseCase
 from src.contexts.shared.infrastructure.cache import InMemoryCacheClient
 from src.contexts.shared.infrastructure.events.in_memory_event_bus import (
     InMemoryEventBus,
@@ -32,4 +33,9 @@ class SharedContainer(containers.DeclarativeContainer):
 
     event_bus = providers.Singleton(
         InMemoryEventBus,
+    )
+
+    check_health_use_case = providers.Factory(
+        CheckHealthUseCase,
+        session_factory=session_factory,
     )

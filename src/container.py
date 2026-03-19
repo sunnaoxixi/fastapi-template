@@ -6,6 +6,7 @@ from src.contexts.shared.infrastructure.container import SharedContainer
 
 class ApplicationContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
+        modules=["src.main"],
         packages=["src.contexts"],
         auto_wire=False,
     )

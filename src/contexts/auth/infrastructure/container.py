@@ -7,6 +7,8 @@ from src.contexts.auth.application.use_cases.create_api_key import (
     CreateApiKeyUseCase,
 )
 from src.contexts.auth.application.use_cases.create_user import CreateUserUseCase
+from src.contexts.auth.application.use_cases.delete_user import DeleteUserUseCase
+from src.contexts.auth.application.use_cases.get_user import GetUserUseCase
 from src.contexts.auth.application.use_cases.list_users import ListUsersUseCase
 from src.contexts.auth.application.use_cases.revoke_api_key import RevokeApiKeyUseCase
 from src.contexts.auth.infrastructure.persistence.user_repository import (
@@ -43,4 +45,10 @@ class AuthContainer(containers.DeclarativeContainer):
         RevokeApiKeyUseCase,
         user_repository=user_repository,
         event_bus=shared.event_bus,
+    )
+    get_user_use_case = providers.Factory(
+        GetUserUseCase, user_repository=user_repository
+    )
+    delete_user_use_case = providers.Factory(
+        DeleteUserUseCase, user_repository=user_repository
     )
