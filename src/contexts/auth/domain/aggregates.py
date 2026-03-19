@@ -4,13 +4,14 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field
 
 from src.contexts.auth.domain.errors import ApiKeyNotFoundError
+from src.contexts.auth.domain.services import ApiKeyHasher
 from src.contexts.shared.domain.aggregate_root import AggregateRoot
 
 
 class ApiKey(BaseModel):
     api_key_id: UUID = Field(..., alias="id")
     user_id: UUID
-    key: str
+    key_hash: str
     updated_at: datetime
     created_at: datetime
     is_active: bool = True
@@ -20,16 +21,18 @@ class ApiKey(BaseModel):
     @staticmethod
     def create(
         user_id: UUID,
-    ) -> ApiKey:
+    ) -> tuple["ApiKey", str]:
         now = datetime.now(UTC)
-        return ApiKey(
+        plain_key = str(uuid4())
+        api_key = ApiKey(
             id=uuid4(),
             user_id=user_id,
-            key=str(uuid4()),
+            key_hash=ApiKeyHasher.hash(plain_key),
             is_active=True,
             created_at=now,
             updated_at=now,
         )
+        return api_key, plain_key
 
 
 class User(AggregateRoot):
@@ -47,7 +50,7 @@ class User(AggregateRoot):
         username: str,
         password: str,
         email: str | None = None,
-    ) -> User:
+    ) -> "User":
         user_id = uuid4()
         now = datetime.now(UTC)
         return User(
@@ -61,11 +64,11 @@ class User(AggregateRoot):
             api_keys=[],
         )
 
-    def create_api_key(self) -> ApiKey:
-        api_key = ApiKey.create(user_id=self.user_id)
+    def create_api_key(self) -> tuple[ApiKey, str]:
+        api_key, plain_key = ApiKey.create(user_id=self.user_id)
         self.api_keys.append(api_key)
         self.updated_at = datetime.now(UTC)
-        return api_key
+        return api_key, plain_key
 
     def revoke_api_key(self, api_key_id: UUID) -> None:
         for api_key in self.api_keys:
@@ -79,8 +82,8 @@ class User(AggregateRoot):
     def get_active_api_keys(self) -> list[ApiKey]:
         return [key for key in self.api_keys if key.is_active]
 
-    def find_api_key(self, api_key: str) -> ApiKey | None:
+    def find_api_key_by_hash(self, key_hash: str) -> ApiKey | None:
         for key in self.api_keys:
-            if key.key == api_key:
+            if key.key_hash == key_hash:
                 return key
         return None

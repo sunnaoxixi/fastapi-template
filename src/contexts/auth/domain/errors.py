@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from src.contexts.shared.domain.errors import (
+    ConflictError,
     ForbiddenError,
     NotFoundError,
     UnauthorizedError,
@@ -34,3 +35,9 @@ class ApiKeyNotFoundError(NotFoundError):
             f"API key not found: {api_key}" if api_key else "API key not found"
         )
         self.api_key = api_key
+
+
+class UsernameAlreadyExistsError(ConflictError):
+    def __init__(self, username: str) -> None:
+        super().__init__(f"Username '{username}' already exists")
+        self.username = username
