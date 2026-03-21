@@ -19,3 +19,6 @@ AGENTS.md
 
 # AI-generated plans and specs
 docs/superpowers/
+
+# Git worktrees
+.worktrees/
