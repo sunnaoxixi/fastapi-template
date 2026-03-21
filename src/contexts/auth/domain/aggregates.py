@@ -26,7 +26,7 @@ class ApiKey(BaseModel):
     @staticmethod
     def create(
         user_id: UUID,
-    ) -> tuple["ApiKey", str]:
+    ) -> tuple[ApiKey, str]:
         now = datetime.now(UTC)
         plain_key = str(uuid4())
         api_key = ApiKey(
@@ -55,7 +55,7 @@ class User(AggregateRoot):
         username: str,
         password: str,
         email: str | None = None,
-    ) -> "User":
+    ) -> User:
         user_id = uuid4()
         now = datetime.now(UTC)
         user = User(

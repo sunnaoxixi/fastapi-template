@@ -26,7 +26,7 @@ class UserModel(SQLAlchemyBaseModel):
     )
 
     @staticmethod
-    def from_domain(user: User) -> "UserModel":
+    def from_domain(user: User) -> UserModel:
         return UserModel(
             user_id=str(user.user_id),
             username=user.username,
@@ -61,7 +61,7 @@ class ApiKeyModel(SQLAlchemyBaseModel):
     user = relationship("UserModel", back_populates="api_keys")
 
     @staticmethod
-    def from_domain(api_key: ApiKey) -> "ApiKeyModel":
+    def from_domain(api_key: ApiKey) -> ApiKeyModel:
         return ApiKeyModel(
             api_key_id=str(api_key.api_key_id),
             user_id=str(api_key.user_id),
