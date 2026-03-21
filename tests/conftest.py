@@ -4,7 +4,8 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from src.main import app as fastapi_app, container
+from src.main import app as fastapi_app
+from src.main import container
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -22,7 +23,5 @@ async def client(app: FastAPI) -> AsyncGenerator[AsyncClient]:
     container.shared_container.engine.reset()
     container.shared_container.session_factory.reset()
     transport = ASGITransport(app=app)
-    async with AsyncClient(
-        transport=transport, base_url="http://test"
-    ) as ac:
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
