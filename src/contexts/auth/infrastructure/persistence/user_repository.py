@@ -1,17 +1,23 @@
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload, sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from src.contexts.auth.domain.aggregates import ApiKey, User
 from src.contexts.auth.domain.repositories import UserRepository
 from src.contexts.auth.infrastructure.persistence.models import ApiKeyModel, UserModel
 from src.contexts.shared.domain.cache_client import CacheClient
+from src.contexts.shared.domain.pagination import (
+    Cursor,
+    CursorParams,
+    CursorResult,
+)
 
 
 class UserSQLAlchemyRepository(UserRepository):
     def __init__(
-        self, session_factory: sessionmaker, cache_client: CacheClient
+        self, session_factory: async_sessionmaker, cache_client: CacheClient
     ) -> None:
         self.session_factory = session_factory
         self.cache_client = cache_client
@@ -37,7 +43,7 @@ class UserSQLAlchemyRepository(UserRepository):
                 for old_key in existing_model.api_keys:
                     if old_key.api_key_id not in new_api_key_ids:
                         await session.delete(old_key)
-                        await self.cache_client.delete(f"api_key:{old_key.api_key}")
+                        await self.cache_client.delete(f"api_key:{old_key.key_hash}")
 
                 for api_key in user.api_keys:
                     api_key_model = next(
@@ -50,14 +56,14 @@ class UserSQLAlchemyRepository(UserRepository):
                     )
 
                     if api_key_model:
-                        api_key_model.api_key = api_key.key
+                        api_key_model.key_hash = api_key.key_hash
                         api_key_model.is_active = api_key.is_active
                         api_key_model.updated_at = api_key.updated_at
                     else:
                         new_api_key = ApiKeyModel.from_domain(api_key)
                         session.add(new_api_key)
 
-                    await self.cache_client.set(f"api_key:{api_key.key}", api_key)
+                    await self.cache_client.set(f"api_key:{api_key.key_hash}", api_key)
             else:
                 user_model = UserModel(
                     user_id=str(user.user_id),
@@ -73,7 +79,7 @@ class UserSQLAlchemyRepository(UserRepository):
                 for api_key in user.api_keys:
                     api_key_model = ApiKeyModel.from_domain(api_key)
                     session.add(api_key_model)
-                    await self.cache_client.set(f"api_key:{api_key.key}", api_key)
+                    await self.cache_client.set(f"api_key:{api_key.key_hash}", api_key)
 
             await session.commit()
 
@@ -82,6 +88,19 @@ class UserSQLAlchemyRepository(UserRepository):
             result = await session.execute(
                 select(UserModel)
                 .where(UserModel.user_id == str(user_id))
+                .options(selectinload(UserModel.api_keys))
+            )
+            model = result.scalar_one_or_none()
+
+            if model:
+                return model.to_domain()
+            return None
+
+    async def find_by_username(self, username: str) -> User | None:
+        async with self.session_factory() as session:
+            result = await session.execute(
+                select(UserModel)
+                .where(UserModel.username == username)
                 .options(selectinload(UserModel.api_keys))
             )
             model = result.scalar_one_or_none()
@@ -101,7 +120,7 @@ class UserSQLAlchemyRepository(UserRepository):
 
             if model:
                 for api_key in model.api_keys:
-                    await self.cache_client.delete(f"api_key:{api_key.api_key}")
+                    await self.cache_client.delete(f"api_key:{api_key.key_hash}")
 
                 await session.delete(model)
                 await session.commit()
@@ -115,19 +134,84 @@ class UserSQLAlchemyRepository(UserRepository):
 
             return [model.to_domain() for model in models]
 
-    async def find_api_key_by_key(self, key: str) -> ApiKey | None:
-        cached_api_key = await self.cache_client.get(f"api_key:{key}")
+    async def list_paginated(self, params: CursorParams) -> CursorResult[User]:
+        async with self.session_factory() as session:
+            query = select(UserModel).options(selectinload(UserModel.api_keys))
+
+            cursor = Cursor.decode(params.cursor) if params.cursor else None
+            is_prev = cursor.is_previous if cursor else False
+
+            if cursor:
+                if is_prev:
+                    query = query.where(
+                        (UserModel.created_at, UserModel.user_id)
+                        > (cursor.created_at, str(cursor.entity_id))
+                    ).order_by(
+                        UserModel.created_at.asc(),
+                        UserModel.user_id.asc(),
+                    )
+                else:
+                    query = query.where(
+                        (UserModel.created_at, UserModel.user_id)
+                        < (cursor.created_at, str(cursor.entity_id))
+                    ).order_by(
+                        UserModel.created_at.desc(),
+                        UserModel.user_id.desc(),
+                    )
+            else:
+                query = query.order_by(
+                    UserModel.created_at.desc(),
+                    UserModel.user_id.desc(),
+                )
+
+            query = query.limit(params.page_size + 1)
+            result = await session.execute(query)
+            models = list(result.scalars().all())
+
+            has_more = len(models) > params.page_size
+            models = models[: params.page_size]
+
+            if is_prev:
+                models.reverse()
+
+            items = [m.to_domain() for m in models]
+
+            next_cursor = None
+            previous_cursor = None
+
+            if items:
+                last = items[-1]
+                first = items[0]
+
+                if (not is_prev and has_more) or is_prev:
+                    next_cursor = Cursor.for_next(
+                        last.created_at, last.user_id
+                    ).encode()
+
+                if (not is_prev and cursor) or (is_prev and has_more):
+                    previous_cursor = Cursor.for_previous(
+                        first.created_at, first.user_id
+                    ).encode()
+
+            return CursorResult(
+                items=items,
+                next_cursor=next_cursor,
+                previous_cursor=previous_cursor,
+            )
+
+    async def find_api_key_by_hash(self, key_hash: str) -> ApiKey | None:
+        cached_api_key = await self.cache_client.get(f"api_key:{key_hash}")
         if cached_api_key:
             return cached_api_key
 
         async with self.session_factory() as session:
             result = await session.execute(
-                select(ApiKeyModel).where(ApiKeyModel.key == key)
+                select(ApiKeyModel).where(ApiKeyModel.key_hash == key_hash)
             )
             model = result.scalar_one_or_none()
 
             if model:
                 api_key_domain = model.to_domain()
-                await self.cache_client.set(f"api_key:{key}", api_key_domain)
+                await self.cache_client.set(f"api_key:{key_hash}", api_key_domain)
                 return api_key_domain
             return None

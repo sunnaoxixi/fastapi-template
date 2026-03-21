@@ -8,6 +8,9 @@ from src.contexts.auth.application.use_cases.revoke_api_key import (
 )
 from src.contexts.auth.domain.aggregates import User
 from src.contexts.auth.domain.errors import ApiKeyNotFoundError, UserNotFoundError
+from src.contexts.shared.infrastructure.events.in_memory_event_bus import (
+    InMemoryEventBus,
+)
 from tests.contexts.auth.conftest import FakeUserRepository
 
 
@@ -18,11 +21,12 @@ class TestRevokeApiKeyUseCase:
         fake_user_repository: FakeUserRepository,
         sample_user_with_api_key: tuple[User, str],
     ) -> None:
-        user, api_key = sample_user_with_api_key
+        user, plain_key = sample_user_with_api_key
         await fake_user_repository.save(user)
-        use_case = RevokeApiKeyUseCase(fake_user_repository)
+        event_bus = InMemoryEventBus()
+        use_case = RevokeApiKeyUseCase(fake_user_repository, event_bus)
 
-        await use_case.execute(RevokeApiKeyDTO(user_id=user.user_id, api_key=api_key))
+        await use_case.execute(RevokeApiKeyDTO(user_id=user.user_id, api_key=plain_key))
 
         saved_user = await fake_user_repository.find_by_id(user.user_id)
         assert saved_user is not None
@@ -31,7 +35,8 @@ class TestRevokeApiKeyUseCase:
     async def test_raises_error_for_nonexistent_user(
         self, fake_user_repository: FakeUserRepository
     ) -> None:
-        use_case = RevokeApiKeyUseCase(fake_user_repository)
+        event_bus = InMemoryEventBus()
+        use_case = RevokeApiKeyUseCase(fake_user_repository, event_bus)
 
         with pytest.raises(UserNotFoundError):
             await use_case.execute(RevokeApiKeyDTO(user_id=uuid4(), api_key="any"))
@@ -40,7 +45,8 @@ class TestRevokeApiKeyUseCase:
         self, fake_user_repository: FakeUserRepository, sample_user: User
     ) -> None:
         await fake_user_repository.save(sample_user)
-        use_case = RevokeApiKeyUseCase(fake_user_repository)
+        event_bus = InMemoryEventBus()
+        use_case = RevokeApiKeyUseCase(fake_user_repository, event_bus)
 
         with pytest.raises(ApiKeyNotFoundError):
             await use_case.execute(

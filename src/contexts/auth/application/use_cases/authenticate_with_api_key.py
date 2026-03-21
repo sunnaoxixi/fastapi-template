@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from src.contexts.auth.domain.errors import InactiveApiKeyError, InvalidApiKeyError
 from src.contexts.auth.domain.repositories import UserRepository
+from src.contexts.auth.domain.services import ApiKeyHasher
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,7 +15,8 @@ class AuthenticateWithApiKeyUseCase:
         self.user_repository = user_repository
 
     async def execute(self, dto: AuthenticateWithApiKeyDTO) -> None:
-        api_key = await self.user_repository.find_api_key_by_key(dto.api_key)
+        key_hash = ApiKeyHasher.hash(dto.api_key)
+        api_key = await self.user_repository.find_api_key_by_hash(key_hash)
 
         if not api_key:
             raise InvalidApiKeyError

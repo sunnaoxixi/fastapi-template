@@ -20,14 +20,14 @@ def register_create_api_key_command(app: typer.Typer) -> None:
         container = AuthContainer(shared=SharedContainer())
         use_case = container.create_api_key_use_case()
         try:
-            api_key = await use_case.execute(CreateApiKeyDTO(user_id=UUID(user_id)))
+            plain_key = await use_case.execute(CreateApiKeyDTO(user_id=UUID(user_id)))
         except UserNotFoundError as exc:
-            console.print(f"[red]✗[/red] {exc}")
+            console.print(f"[red]x[/red] {exc}")
             raise typer.Exit(code=1) from exc
 
-        console.print("[green]✓[/green] API key created successfully:")
-        console.print(f"  • ID: {api_key.api_key_id}")
-        console.print(f"  • User ID: {api_key.user_id}")
-        console.print(f"  • API Key: {api_key.api_key}")
-        console.print(f"  • Active: {'yes' if api_key.is_active else 'no'}")
-        console.print(f"  • Created: {api_key.created_at}")
+        console.print("[green]v[/green] API key created successfully:")
+        console.print(f"  - User ID: {user_id}")
+        console.print(f"  - API Key: {plain_key}")
+        console.print(
+            "  [yellow]Save this key — it cannot be retrieved later.[/yellow]"
+        )
