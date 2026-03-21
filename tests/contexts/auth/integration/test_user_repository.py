@@ -22,9 +22,7 @@ def cache_client(override_container: ApplicationContainer) -> InMemoryCacheClien
 
 @pytest.mark.integration
 class TestUserRepositoryCRUD:
-    async def test_save_and_find_by_id(
-        self, user_repository: UserRepository
-    ) -> None:
+    async def test_save_and_find_by_id(self, user_repository: UserRepository) -> None:
         user = UserFactory.build()
         await user_repository.save(user)
 
@@ -37,9 +35,7 @@ class TestUserRepositoryCRUD:
         assert found.password == user.password
         assert found.is_active == user.is_active
 
-    async def test_find_by_username(
-        self, user_repository: UserRepository
-    ) -> None:
+    async def test_find_by_username(self, user_repository: UserRepository) -> None:
         user = UserFactory.build()
         await user_repository.save(user)
 
@@ -55,9 +51,7 @@ class TestUserRepositoryCRUD:
 
         assert found is None
 
-    async def test_update_existing_user(
-        self, user_repository: UserRepository
-    ) -> None:
+    async def test_update_existing_user(self, user_repository: UserRepository) -> None:
         user = UserFactory.build()
         await user_repository.save(user)
 
@@ -70,9 +64,7 @@ class TestUserRepositoryCRUD:
         assert found.username == "updated-username"
         assert found.email == "updated@test.com"
 
-    async def test_delete_user(
-        self, user_repository: UserRepository
-    ) -> None:
+    async def test_delete_user(self, user_repository: UserRepository) -> None:
         user = UserFactory.build()
         await user_repository.save(user)
 

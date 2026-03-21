@@ -24,9 +24,7 @@ class UserFactory:
         return user, plain_key
 
     @staticmethod
-    def with_n_api_keys(
-        n: int, **overrides: object
-    ) -> tuple[User, list[str]]:
+    def with_n_api_keys(n: int, **overrides: object) -> tuple[User, list[str]]:
         user = UserFactory.build(**overrides)
         keys = [user.create_api_key()[1] for _ in range(n)]
         return user, keys
@@ -41,16 +39,12 @@ class PersistentUserFactory:
         await self.repo.save(user)
         return user
 
-    async def create_with_api_key(
-        self, **overrides: object
-    ) -> tuple[User, str]:
+    async def create_with_api_key(self, **overrides: object) -> tuple[User, str]:
         user, plain_key = UserFactory.with_api_key(**overrides)
         await self.repo.save(user)
         return user, plain_key
 
-    async def create_batch(
-        self, count: int, **overrides: object
-    ) -> list[User]:
+    async def create_batch(self, count: int, **overrides: object) -> list[User]:
         users = [UserFactory.build(**overrides) for _ in range(count)]
         for u in users:
             await self.repo.save(u)
