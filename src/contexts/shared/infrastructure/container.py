@@ -1,6 +1,5 @@
 from dependency_injector import containers, providers
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.contexts.shared.application.use_cases.check_health import CheckHealthUseCase
 from src.contexts.shared.infrastructure.cache import InMemoryCacheClient
@@ -24,7 +23,7 @@ class SharedContainer(containers.DeclarativeContainer):
     )
 
     session_factory = providers.Singleton(
-        sessionmaker,
+        async_sessionmaker,
         bind=engine,
         class_=AsyncSession,
         expire_on_commit=False,

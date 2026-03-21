@@ -1,7 +1,8 @@
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload, sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from src.contexts.auth.domain.aggregates import ApiKey, User
 from src.contexts.auth.domain.repositories import UserRepository
@@ -16,7 +17,7 @@ from src.contexts.shared.domain.pagination import (
 
 class UserSQLAlchemyRepository(UserRepository):
     def __init__(
-        self, session_factory: sessionmaker, cache_client: CacheClient
+        self, session_factory: async_sessionmaker, cache_client: CacheClient
     ) -> None:
         self.session_factory = session_factory
         self.cache_client = cache_client
