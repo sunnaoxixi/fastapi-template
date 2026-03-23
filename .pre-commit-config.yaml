@@ -43,7 +43,7 @@ repos:
       - id: gitleaks
         name: "🔒 gitleaks · Secret scan"
   - repo: https://github.com/hukkin/mdformat
-    rev: 0.7.22
+    rev: 1.0.0
     hooks:
       - id: mdformat
         name: "📝 markdown · Format markdown"
