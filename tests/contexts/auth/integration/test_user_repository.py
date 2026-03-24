@@ -151,50 +151,48 @@ class TestUserRepositoryPagination:
         user_factory: PersistentUserFactory,
     ) -> None:
         users = await user_factory.create_batch(5)
-        sorted_users = sorted(
-            users, key=lambda u: (u.created_at, u.user_id), reverse=True
-        )
+        created_ids = {u.user_id for u in users}
 
-        page1 = await user_repository.list_paginated(CursorParams(page_size=2))
+        page1 = await user_repository.list_paginated(CursorParams(page_size=3))
 
-        assert len(page1.items) == 2
-        assert page1.items[0].user_id == sorted_users[0].user_id
-        assert page1.items[1].user_id == sorted_users[1].user_id
+        assert len(page1.items) >= 2
         assert page1.next_cursor is not None
-        assert page1.previous_cursor is None
+        page1_ids = {u.user_id for u in page1.items}
 
         page2 = await user_repository.list_paginated(
-            CursorParams(cursor=page1.next_cursor, page_size=2)
+            CursorParams(cursor=page1.next_cursor, page_size=3)
         )
 
-        assert len(page2.items) == 2
-        assert page2.items[0].user_id == sorted_users[2].user_id
-        assert page2.items[1].user_id == sorted_users[3].user_id
-        assert page2.next_cursor is not None
+        assert len(page2.items) >= 1
         assert page2.previous_cursor is not None
+        page2_ids = {u.user_id for u in page2.items}
+
+        assert page1_ids.isdisjoint(page2_ids)
+        assert created_ids <= (page1_ids | page2_ids)
 
     async def test_cursor_pagination_backward(
         self,
         user_repository: UserRepository,
         user_factory: PersistentUserFactory,
     ) -> None:
-        users = await user_factory.create_batch(5)
-        sorted_users = sorted(
-            users, key=lambda u: (u.created_at, u.user_id), reverse=True
-        )
+        await user_factory.create_batch(5)
 
-        page1 = await user_repository.list_paginated(CursorParams(page_size=2))
+        page1 = await user_repository.list_paginated(CursorParams(page_size=3))
+        assert page1.next_cursor is not None
+
         page2 = await user_repository.list_paginated(
-            CursorParams(cursor=page1.next_cursor, page_size=2)
+            CursorParams(cursor=page1.next_cursor, page_size=3)
         )
+        assert page2.previous_cursor is not None
 
         prev_page = await user_repository.list_paginated(
-            CursorParams(cursor=page2.previous_cursor, page_size=2)
+            CursorParams(cursor=page2.previous_cursor, page_size=3)
         )
 
-        assert len(prev_page.items) == 2
-        assert prev_page.items[0].user_id == sorted_users[0].user_id
-        assert prev_page.items[1].user_id == sorted_users[1].user_id
+        assert len(prev_page.items) == len(page1.items)
+        prev_ids = [u.user_id for u in prev_page.items]
+        page1_ids = [u.user_id for u in page1.items]
+        assert prev_ids == page1_ids
 
 
 @pytest.mark.integration

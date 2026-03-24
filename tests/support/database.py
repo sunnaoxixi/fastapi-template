@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator
 
 import pytest
 from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
@@ -20,7 +21,7 @@ def test_engine() -> AsyncEngine:
 @pytest.fixture
 async def test_transaction(
     test_engine: AsyncEngine,
-) -> AsyncGenerator[AsyncSession]:
+) -> AsyncGenerator[AsyncConnection]:
     async with test_engine.connect() as conn:
         transaction = await conn.begin()
         yield conn
@@ -29,8 +30,8 @@ async def test_transaction(
 
 @pytest.fixture
 def test_session_factory(
-    test_transaction: AsyncSession,
-) -> async_sessionmaker:
+    test_transaction: AsyncConnection,
+) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(
         bind=test_transaction,
         class_=AsyncSession,

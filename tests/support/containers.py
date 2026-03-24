@@ -1,7 +1,7 @@
 from collections.abc import Generator
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from src.container import ApplicationContainer
 from src.contexts.shared.infrastructure.cache import InMemoryCacheClient
@@ -12,7 +12,7 @@ from tests.support.factories import PersistentUserFactory
 @pytest.fixture
 def override_container(
     test_engine: AsyncEngine,
-    test_session_factory: async_sessionmaker,
+    test_session_factory: async_sessionmaker[AsyncSession],
 ) -> Generator[ApplicationContainer]:
     with (
         container.shared_container.session_factory.override(test_session_factory),

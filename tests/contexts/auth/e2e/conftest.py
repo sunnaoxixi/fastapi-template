@@ -4,6 +4,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
+from src.container import ApplicationContainer
 from src.main import container
 
 
@@ -15,7 +16,7 @@ def _wire_container() -> None:
 @pytest.fixture
 async def client(
     app: FastAPI,
-    override_container: object,  # noqa: ARG001
+    override_container: ApplicationContainer,  # noqa: ARG001
 ) -> AsyncGenerator[AsyncClient]:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
