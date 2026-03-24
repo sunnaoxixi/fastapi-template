@@ -4,10 +4,10 @@ from src.contexts.auth.application.use_cases.authenticate_with_api_key import (
     AuthenticateWithApiKeyDTO,
     AuthenticateWithApiKeyUseCase,
 )
-from src.contexts.auth.domain.aggregates import User
 from src.contexts.auth.domain.errors import InactiveApiKeyError, InvalidApiKeyError
 from src.contexts.auth.domain.services import ApiKeyHasher
 from tests.contexts.auth.conftest import FakeUserRepository
+from tests.support.factories import UserFactory
 
 
 @pytest.mark.unit
@@ -15,9 +15,8 @@ class TestAuthenticateWithApiKeyUseCase:
     async def test_authenticates_with_valid_key(
         self,
         fake_user_repository: FakeUserRepository,
-        sample_user_with_api_key: tuple[User, str],
     ) -> None:
-        user, plain_key = sample_user_with_api_key
+        user, plain_key = UserFactory.with_api_key()
         await fake_user_repository.save(user)
         use_case = AuthenticateWithApiKeyUseCase(fake_user_repository)
 
@@ -34,9 +33,8 @@ class TestAuthenticateWithApiKeyUseCase:
     async def test_raises_error_for_inactive_key(
         self,
         fake_user_repository: FakeUserRepository,
-        sample_user_with_api_key: tuple[User, str],
     ) -> None:
-        user, plain_key = sample_user_with_api_key
+        user, plain_key = UserFactory.with_api_key()
         key_hash = ApiKeyHasher.hash(plain_key)
         api_key_entity = user.find_api_key_by_hash(key_hash)
         assert api_key_entity is not None

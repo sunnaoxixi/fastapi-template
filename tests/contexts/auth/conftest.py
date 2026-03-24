@@ -51,18 +51,3 @@ class FakeUserRepository(UserRepository):
 @pytest.fixture
 def fake_user_repository() -> FakeUserRepository:
     return FakeUserRepository()
-
-
-@pytest.fixture
-def sample_user() -> User:
-    return User.create(
-        username="testuser",
-        password="hashedpassword123",
-        email="test@example.com",
-    )
-
-
-@pytest.fixture
-def sample_user_with_api_key(sample_user: User) -> tuple[User, str]:
-    _api_key, plain_key = sample_user.create_api_key()
-    return sample_user, plain_key
